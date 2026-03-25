@@ -1,9 +1,9 @@
 import { useState } from 'react';
-import { AbilityScore } from './components/AbilityScore';
-import { SkillItem } from './components/SkillItem';
-import { StatBox } from './components/StatBox';
-import { SavingThrow } from './components/SavingThrow';
-import { SpellList } from './components/SpellList';
+import { AbilityScore } from '../components/character/AbilityScore';
+import { SkillItem } from '../components/character/SkillItem';
+import { StatBox } from '../components/character/StatBox';
+import { SavingThrow } from '../components/character/SavingThrow';
+import { SpellList } from '../components/character/SpellList';
 import { Scroll, Swords, Sparkles } from 'lucide-react';
 
 interface SpellSlot {
