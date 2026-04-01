@@ -89,14 +89,50 @@ export default function App() {
   const [showRaceSkillChoice, setShowRaceSkillChoice] = useState(false);
   const [pendingRace, setPendingRace] = useState('');
   const [selectedRaceSkills, setSelectedRaceSkills] = useState<string[]>([]);
+  const [appliedRaceSkills, setAppliedRaceSkills] = useState<string[]>([]);
   const [requiredSkillChoices, setRequiredSkillChoices] = useState(0);
   const [showBackgroundSkillChoice, setShowBackgroundSkillChoice] = useState(false);
   const [pendingBackground, setPendingBackground] = useState('');
+  const [appliedClassSkills, setAppliedClassSkills] = useState<string[]>([]);
+  const [appliedBackgroundSkills, setAppliedBackgroundSkills] = useState<string[]>([]);
   const [backgroundConflictingSkills, setBackgroundConflictingSkills] = useState<string[]>([]);
   const [backgroundNonConflictingSkills, setBackgroundNonConflictingSkills] = useState<string[]>([]);
   const [selectedBackgroundReplacementSkills, setSelectedBackgroundReplacementSkills] = useState<string[]>([]);
 
   const proficiencyBonus = getProficiencyBonus(character.level);
+
+  // Helper function to remove a specific feature section
+  const removeFeatureSection = (features: string, sectionName: string): string => {
+    const regex = new RegExp(`=== ${sectionName} ===\n[^=]*(?===.*===|$)`, 'g');
+    return features.replace(regex, '').trim();
+  };
+
+  // Helper function to rebuild skills from current race, class, and background selections
+  const rebuildSkills = (
+    race: string,
+    raceSkillsToApply: string[],
+    classSkillsToApply: string[],
+    backgroundSkillsToApply: string[]
+  ): Record<string, boolean> => {
+    const newSkills: Record<string, boolean> = {};
+    
+    // Apply race skills
+    raceSkillsToApply.forEach(skill => {
+      newSkills[skill] = true;
+    });
+    
+    // Apply class skills
+    classSkillsToApply.forEach(skill => {
+      newSkills[skill] = true;
+    });
+    
+    // Apply background skills
+    backgroundSkillsToApply.forEach(skill => {
+      newSkills[skill] = true;
+    });
+    
+    return newSkills;
+  };
 
   const updateAbilityScore = (ability: keyof Character['abilityScores'], value: number) => {
     setCharacter({
@@ -149,20 +185,16 @@ export default function App() {
   const applyRaceRecommendations = (race: string, skills: string[]) => {
     const raceRec = RACE_RECOMMENDATIONS[race];
     if (raceRec) {
-      const newSkills = { ...character.skills };
-      skills.forEach(skill => {
-        newSkills[skill] = true;
-      });
+      // Rebuild skills: remove old race skills, add new race skills, keep class/background skills
+      const newSkills = rebuildSkills(race, skills, appliedClassSkills, appliedBackgroundSkills);
 
-      // Combine racial features with existing class features
-      let combinedFeatures = '';
+      // Remove old racial traits and combine new ones with remaining features (class/background)
+      let combinedFeatures = removeFeatureSection(character.features, 'RACIAL TRAITS');
       if (raceRec.features) {
-        combinedFeatures += `=== RACIAL TRAITS ===\n${raceRec.features}`;
-      }
-      if (character.features) {
-        combinedFeatures += `\n\n${character.features}`;
+        combinedFeatures = `=== RACIAL TRAITS ===\n${raceRec.features}` + (combinedFeatures ? `\n\n${combinedFeatures}` : '');
       }
 
+      setAppliedRaceSkills(skills);
       setCharacter({
         ...character,
         race: race,
@@ -175,19 +207,13 @@ export default function App() {
   const applyClassRecommendations = () => {
     const recommendations = CLASS_RECOMMENDATIONS[pendingClass];
     if (recommendations) {
-      const newSkills: Record<string, boolean> = { ...character.skills };
-      recommendations.skills.forEach(skill => {
-        newSkills[skill] = true;
-      });
+      // Rebuild skills: keep race/background skills, add new class skills
+      const newSkills = rebuildSkills(character.race, appliedRaceSkills, recommendations.skills, appliedBackgroundSkills);
 
-      // Combine class features with existing racial features
-      let combinedFeatures = character.features;
+      // Remove old class features and combine new ones with remaining features (racial/background)
+      let combinedFeatures = removeFeatureSection(character.features, 'CLASS FEATURES');
       if (recommendations.features) {
-        if (combinedFeatures && !combinedFeatures.includes('=== CLASS FEATURES ===')) {
-          combinedFeatures += `\n\n=== CLASS FEATURES ===\n${recommendations.features}`;
-        } else if (!combinedFeatures) {
-          combinedFeatures = `=== CLASS FEATURES ===\n${recommendations.features}`;
-        }
+        combinedFeatures = `=== CLASS FEATURES ===\n${recommendations.features}` + (combinedFeatures ? `\n\n${combinedFeatures}` : '');
       }
 
       // Set saving throw proficiencies
@@ -197,6 +223,7 @@ export default function App() {
         newSavingThrows[save] = true;
       });
 
+      setAppliedClassSkills(recommendations.skills);
       setCharacter({
         ...character,
         class: pendingClass,
@@ -269,21 +296,16 @@ export default function App() {
   const applyBackgroundRecommendations = (background: string, skills: string[]) => {
     const backgroundRec = BACKGROUND_RECOMMENDATIONS[background];
     if (backgroundRec) {
-      const newSkills = { ...character.skills };
-      skills.forEach(skill => {
-        newSkills[skill] = true;
-      });
+      // Rebuild skills: keep race/class skills, add new background skills
+      const newSkills = rebuildSkills(character.race, appliedRaceSkills, appliedClassSkills, skills);
 
-      // Combine background features with existing class and racial features
-      let combinedFeatures = character.features;
+      // Remove old background feature and combine new one with remaining features (class/racial)
+      let combinedFeatures = removeFeatureSection(character.features, 'BACKGROUND FEATURE');
       if (backgroundRec.feature) {
-        if (combinedFeatures && !combinedFeatures.includes('=== BACKGROUND FEATURE ===')) {
-          combinedFeatures += `\n\n=== BACKGROUND FEATURE ===\n${backgroundRec.feature}`;
-        } else if (!combinedFeatures) {
-          combinedFeatures = `=== BACKGROUND FEATURE ===\n${backgroundRec.feature}`;
-        }
+        combinedFeatures = `=== BACKGROUND FEATURE ===\n${backgroundRec.feature}` + (combinedFeatures ? `\n\n${combinedFeatures}` : '');
       }
 
+      setAppliedBackgroundSkills(skills);
       setCharacter({
         ...character,
         background: background,
@@ -308,24 +330,19 @@ export default function App() {
   const confirmBackgroundSkillChoices = () => {
     const backgroundRec = BACKGROUND_RECOMMENDATIONS[pendingBackground];
     if (backgroundRec) {
-      const newSkills = { ...character.skills };
-      backgroundNonConflictingSkills.forEach(skill => {
-        newSkills[skill] = true;
-      });
-      selectedBackgroundReplacementSkills.forEach(skill => {
-        newSkills[skill] = true;
-      });
+      // Combine all background skills: non-conflicting + replacement skills
+      const allBackgroundSkills = [...backgroundNonConflictingSkills, ...selectedBackgroundReplacementSkills];
+      
+      // Rebuild skills: keep race/class skills, add new background skills
+      const newSkills = rebuildSkills(character.race, appliedRaceSkills, appliedClassSkills, allBackgroundSkills);
 
-      // Combine background features with existing class and racial features
-      let combinedFeatures = character.features;
+      // Remove old background feature and combine new one with remaining features (class/racial)
+      let combinedFeatures = removeFeatureSection(character.features, 'BACKGROUND FEATURE');
       if (backgroundRec.feature) {
-        if (combinedFeatures && !combinedFeatures.includes('=== BACKGROUND FEATURE ===')) {
-          combinedFeatures += `\n\n=== BACKGROUND FEATURE ===\n${backgroundRec.feature}`;
-        } else if (!combinedFeatures) {
-          combinedFeatures = `=== BACKGROUND FEATURE ===\n${backgroundRec.feature}`;
-        }
+        combinedFeatures = `=== BACKGROUND FEATURE ===\n${backgroundRec.feature}` + (combinedFeatures ? `\n\n${combinedFeatures}` : '');
       }
 
+      setAppliedBackgroundSkills(allBackgroundSkills);
       setCharacter({
         ...character,
         background: pendingBackground,
