@@ -9,7 +9,7 @@ import { Scroll, Swords, Sparkles } from 'lucide-react';
 // Import logic from dedicated modules
 import { getModifier, getProficiencyBonus } from '../logic/ability';
 import { SKILLS } from '../logic/skills';
-import { CLASSES, CLASS_RECOMMENDATIONS, CLASS_SAVING_THROWS } from '../logic/class';
+import { CLASSES, CLASS_RECOMMENDATIONS, CLASS_SAVING_THROWS, type ClassRecommendations } from '../logic/class';
 import { RACES, RACE_RECOMMENDATIONS } from '../logic/race';
 import { BACKGROUNDS, ALIGNMENTS, BACKGROUND_RECOMMENDATIONS } from '../logic/backgrounds';
 
@@ -86,6 +86,10 @@ export default function App() {
 
   const [showAutoFillPrompt, setShowAutoFillPrompt] = useState(false);
   const [pendingClass, setPendingClass] = useState('');
+  const [showClassSkillChoice, setShowClassSkillChoice] = useState(false);
+  const [pendingClassSkillOptions, setPendingClassSkillOptions] = useState<string[]>([]);
+  const [requiredClassSkillChoices, setRequiredClassSkillChoices] = useState(0);
+  const [selectedClassSkills, setSelectedClassSkills] = useState<string[]>([]);
   const [showRaceSkillChoice, setShowRaceSkillChoice] = useState(false);
   const [pendingRace, setPendingRace] = useState('');
   const [selectedRaceSkills, setSelectedRaceSkills] = useState<string[]>([]);
@@ -132,6 +136,31 @@ export default function App() {
     });
     
     return newSkills;
+  };
+
+  // Helper function to determine if a skill is already granted and by what source
+  const getSkillSource = (skillName: string): string | null => {
+    if (appliedClassSkills.includes(skillName)) {
+      return `${character.class} class`;
+    }
+    if (appliedBackgroundSkills.includes(skillName)) {
+      return `${character.background} background`;
+    }
+    if (appliedRaceSkills.includes(skillName)) {
+      return `${character.race} race`;
+    }
+    return null;
+  };
+
+  // Helper function to check only race and background sources (used when selecting class skills to ignore old class skills being replaced)
+  const getSkillSourceExcludingClass = (skillName: string): string | null => {
+    if (appliedBackgroundSkills.includes(skillName)) {
+      return `${character.background} background`;
+    }
+    if (appliedRaceSkills.includes(skillName)) {
+      return `${character.race} race`;
+    }
+    return null;
   };
 
   const updateAbilityScore = (ability: keyof Character['abilityScores'], value: number) => {
@@ -207,35 +236,75 @@ export default function App() {
   const applyClassRecommendations = () => {
     const recommendations = CLASS_RECOMMENDATIONS[pendingClass];
     if (recommendations) {
-      // Rebuild skills: keep race/background skills, add new class skills
-      const newSkills = rebuildSkills(character.race, appliedRaceSkills, recommendations.skills, appliedBackgroundSkills);
-
-      // Remove old class features and combine new ones with remaining features (racial/background)
-      let combinedFeatures = removeFeatureSection(character.features, 'CLASS FEATURES');
-      if (recommendations.features) {
-        combinedFeatures = `=== CLASS FEATURES ===\n${recommendations.features}` + (combinedFeatures ? `\n\n${combinedFeatures}` : '');
+      // Check if class has skill choices
+      if (recommendations.skillChoices && recommendations.skillChoices > 0 && recommendations.skillOptions) {
+        // Show skill choice modal
+        setPendingClassSkillOptions(recommendations.skillOptions);
+        setRequiredClassSkillChoices(recommendations.skillChoices);
+        setSelectedClassSkills([]);
+        setShowClassSkillChoice(true);
+      } else {
+        // No skill choices - apply directly
+        applyClassFinal(recommendations, []);
       }
-
-      // Set saving throw proficiencies
-      const newSavingThrows: Record<string, boolean> = {};
-      const classSavingThrows = CLASS_SAVING_THROWS[pendingClass] || [];
-      classSavingThrows.forEach(save => {
-        newSavingThrows[save] = true;
-      });
-
-      setAppliedClassSkills(recommendations.skills);
-      setCharacter({
-        ...character,
-        class: pendingClass,
-        abilityScores: recommendations.abilityScores,
-        skills: newSkills,
-        savingThrows: newSavingThrows,
-        features: combinedFeatures,
-        equipment: recommendations.equipment,
-      });
     }
     setShowAutoFillPrompt(false);
+  };
+
+  const applyClassFinal = (recommendations: ClassRecommendations, classSkills: string[]) => {
+    // Rebuild skills: keep race/background skills, add new class skills
+    const newSkills = rebuildSkills(character.race, appliedRaceSkills, classSkills, appliedBackgroundSkills);
+
+    // Remove old class features and combine new ones with remaining features (racial/background)
+    let combinedFeatures = removeFeatureSection(character.features, 'CLASS FEATURES');
+    if (recommendations.features) {
+      combinedFeatures = `=== CLASS FEATURES ===\n${recommendations.features}` + (combinedFeatures ? `\n\n${combinedFeatures}` : '');
+    }
+
+    // Set saving throw proficiencies
+    const newSavingThrows: Record<string, boolean> = {};
+    const classSavingThrows = CLASS_SAVING_THROWS[pendingClass] || [];
+    classSavingThrows.forEach(save => {
+      newSavingThrows[save] = true;
+    });
+
+    setAppliedClassSkills(classSkills);
+    setCharacter({
+      ...character,
+      class: pendingClass,
+      abilityScores: recommendations.abilityScores,
+      skills: newSkills,
+      savingThrows: newSavingThrows,
+      features: combinedFeatures,
+      equipment: recommendations.equipment,
+    });
     setPendingClass('');
+  };
+
+  const confirmClassSkillChoices = () => {
+    const recommendations = CLASS_RECOMMENDATIONS[pendingClass];
+    if (recommendations) {
+      applyClassFinal(recommendations, selectedClassSkills);
+    }
+    setShowClassSkillChoice(false);
+    setSelectedClassSkills([]);
+  };
+
+  const toggleClassSkillSelection = (skillName: string) => {
+    // Don't allow selecting skills that are already granted by race or background
+    // (old class skills don't matter since they're being replaced anyway)
+    if (getSkillSourceExcludingClass(skillName)) {
+      return;
+    }
+    
+    setSelectedClassSkills(prev => {
+      if (prev.includes(skillName)) {
+        return prev.filter(s => s !== skillName);
+      } else if (prev.length < requiredClassSkillChoices) {
+        return [...prev, skillName];
+      }
+      return prev;
+    });
   };
 
   const declineAutoFill = () => {
@@ -245,6 +314,11 @@ export default function App() {
   };
 
   const toggleRaceSkillSelection = (skillName: string) => {
+    // Don't allow selecting skills that are already granted
+    if (getSkillSource(skillName)) {
+      return;
+    }
+    
     setSelectedRaceSkills(prev => {
       if (prev.includes(skillName)) {
         return prev.filter(s => s !== skillName);
@@ -422,6 +496,65 @@ export default function App() {
         )}
 
         {/* Race skill choice modal */}
+        {showClassSkillChoice && (
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+            <div className="bg-card border-2 border-amber-700 rounded-lg shadow-2xl p-6 max-w-md w-full max-h-[80vh] overflow-y-auto">
+              <div className="flex items-center gap-2 mb-4">
+                <Sparkles className="w-6 h-6 text-amber-600" />
+                <h3 className="text-xl text-amber-900">Choose Class Skills</h3>
+              </div>
+              <p className="text-sm mb-4">
+                As a {pendingClass}, choose {requiredClassSkillChoices} skill{requiredClassSkillChoices > 1 ? 's' : ''} to gain proficiency in:
+              </p>
+              <p className="text-xs text-muted-foreground mb-4">
+                Selected: {selectedClassSkills.length} / {requiredClassSkillChoices}
+              </p>
+              <div className="space-y-2 mb-6">
+                {SKILLS.filter(skill => pendingClassSkillOptions.includes(skill.name)).map(skill => {
+                  const skillSource = getSkillSourceExcludingClass(skill.name);
+                  const isDisabled = !!skillSource;
+                  
+                  return (
+                    <div
+                      key={skill.name}
+                      className={`flex items-center gap-3 p-2 rounded-md transition-colors ${
+                        isDisabled
+                          ? 'bg-gray-200 cursor-not-allowed opacity-60'
+                          : selectedClassSkills.includes(skill.name)
+                          ? 'bg-amber-100 border border-amber-700 cursor-pointer'
+                          : 'bg-accent/30 hover:bg-accent/50 cursor-pointer'
+                      }`}
+                      onClick={() => !isDisabled && toggleClassSkillSelection(skill.name)}
+                    >
+                      <input
+                        type="checkbox"
+                        checked={selectedClassSkills.includes(skill.name)}
+                        onChange={() => {}}
+                        disabled={isDisabled}
+                        className="w-4 h-4 rounded border-border accent-amber-700 cursor-pointer disabled:opacity-50"
+                      />
+                      <div className="flex flex-col flex-1">
+                        <span className="text-sm">{skill.name}</span>
+                        <span className="text-xs text-muted-foreground">({skill.ability})</span>
+                        {skillSource && (
+                          <span className="text-xs text-gray-600 mt-1">Granted by {skillSource}</span>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+              <button
+                onClick={confirmClassSkillChoices}
+                disabled={selectedClassSkills.length !== requiredClassSkillChoices}
+                className="w-full px-4 py-2 bg-amber-700 text-white rounded-md hover:bg-amber-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                Confirm Selection
+              </button>
+            </div>
+          </div>
+        )}
+
         {showRaceSkillChoice && (
           <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
             <div className="bg-card border-2 border-amber-700 rounded-lg shadow-2xl p-6 max-w-md w-full max-h-[80vh] overflow-y-auto">
@@ -436,26 +569,39 @@ export default function App() {
                 Selected: {selectedRaceSkills.length} / {requiredSkillChoices}
               </p>
               <div className="space-y-2 mb-6">
-                {SKILLS.map(skill => (
-                  <div
-                    key={skill.name}
-                    className={`flex items-center gap-3 p-2 rounded-md cursor-pointer transition-colors ${
-                      selectedRaceSkills.includes(skill.name)
-                        ? 'bg-amber-100 border border-amber-700'
-                        : 'bg-accent/30 hover:bg-accent/50'
-                    }`}
-                    onClick={() => toggleRaceSkillSelection(skill.name)}
-                  >
-                    <input
-                      type="checkbox"
-                      checked={selectedRaceSkills.includes(skill.name)}
-                      onChange={() => {}}
-                      className="w-4 h-4 rounded border-border accent-amber-700 cursor-pointer"
-                    />
-                    <span className="text-sm">{skill.name}</span>
-                    <span className="text-xs text-muted-foreground">({skill.ability})</span>
-                  </div>
-                ))}
+                {SKILLS.map(skill => {
+                  const skillSource = getSkillSource(skill.name);
+                  const isDisabled = !!skillSource;
+                  
+                  return (
+                    <div
+                      key={skill.name}
+                      className={`flex items-center gap-3 p-2 rounded-md transition-colors ${
+                        isDisabled
+                          ? 'bg-gray-200 cursor-not-allowed opacity-60'
+                          : selectedRaceSkills.includes(skill.name)
+                          ? 'bg-amber-100 border border-amber-700 cursor-pointer'
+                          : 'bg-accent/30 hover:bg-accent/50 cursor-pointer'
+                      }`}
+                      onClick={() => !isDisabled && toggleRaceSkillSelection(skill.name)}
+                    >
+                      <input
+                        type="checkbox"
+                        checked={selectedRaceSkills.includes(skill.name)}
+                        onChange={() => {}}
+                        disabled={isDisabled}
+                        className="w-4 h-4 rounded border-border accent-amber-700 cursor-pointer disabled:opacity-50"
+                      />
+                      <div className="flex flex-col flex-1">
+                        <span className="text-sm">{skill.name}</span>
+                        <span className="text-xs text-muted-foreground">({skill.ability})</span>
+                        {skillSource && (
+                          <span className="text-xs text-gray-600 mt-1">Granted by {skillSource}</span>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
               <button
                 onClick={confirmRaceSkillChoices}
