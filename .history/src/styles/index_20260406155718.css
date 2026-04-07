@@ -1,0 +1,15 @@
+@import './fonts.css';
+@import './tailwind.css';
+@import './theme.css';
+
+/* Force Firefox to remove left-side spinner */
+input[type="number"] {
+  -moz-appearance: textfield;
+}
+
+/* Force all browsers to keep arrows on the RIGHT */
+input[type="number"]::-webkit-inner-spin-button,
+input[type="number"]::-webkit-outer-spin-button {
+  margin-left: 0;
+  margin-right: 0;
+}

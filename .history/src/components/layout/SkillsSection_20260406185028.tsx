@@ -1,0 +1,76 @@
+import { getModifier } from "../../logic/ability";
+import { Character } from "../../models/Character";
+
+interface SkillsSectionProps {
+  character: Character;
+  skills: Record<string, boolean>;
+  onToggleSkill: (skillName: string) => void;
+  proficiencyBonus: number;
+}
+
+const SKILL_DATA = [
+  { name: "Acrobatics", ability: "DEX" },
+  { name: "Animal Handling", ability: "WIS" },
+  { name: "Arcana", ability: "INT" },
+  { name: "Athletics", ability: "STR" },
+  { name: "Deception", ability: "CHA" },
+  { name: "History", ability: "INT" },
+];
+
+export function SkillsSection({
+  character,
+  skills,
+  onToggleSkill,
+  proficiencyBonus
+}: SkillsSectionProps) {
+  return (
+    <div className="mb-6 self-start w-full">
+
+      {/* Header */}
+      <h2 className="text-amber-900 mb-4 border-b-2 border-amber-700 pb-2 w-full">
+        Skills
+      </h2>
+
+      {/* Full-width gray box */}
+      <div className="w-full bg-gray-100 border border-gray-300 rounded-md p-3">
+
+        <div className="flex flex-col gap-3">
+          {SKILL_DATA.map(({ name, ability }) => {
+            const abilityKey = ability.toLowerCase() as keyof Character["abilityScores"];
+            const baseMod = getModifier(character.abilityScores[abilityKey]);
+
+            const totalMod = skills[name]
+              ? baseMod + proficiencyBonus
+              : baseMod;
+
+            const modString = totalMod >= 0 ? `+${totalMod}` : `${totalMod}`;
+
+            return (
+              <div
+                key={name}
+                className="flex items-center justify-between text-black text-sm"
+              >
+                {/* Checkbox + skill name */}
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={skills[name] || false}
+                    onChange={() => onToggleSkill(name)}
+                    className="w-4 h-4 rounded border-gray-400 accent-amber-700 cursor-pointer"
+                  />
+                  {name} <span className="text-gray-500 text-xs">({ability})</span>
+                </label>
+
+                {/* Modifier */}
+                <span className="text-xs font-semibold text-gray-700">
+                  {modString}
+                </span>
+              </div>
+            );
+          })}
+        </div>
+
+      </div>
+    </div>
+  );
+}
