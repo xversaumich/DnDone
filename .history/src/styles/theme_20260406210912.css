@@ -1,0 +1,141 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ----------------------------- */
+/* LIGHT THEME (YOUR ORIGINAL)   */
+/* ----------------------------- */
+:root {
+  --background: #fdfcf7;
+  --foreground: #1a1a1a;
+
+  --card: #ffffff;
+  --card-foreground: #1a1a1a;
+
+  --popover: #ffffff;
+  --popover-foreground: #1a1a1a;
+
+  --primary: #1a1a1a;
+  --primary-foreground: #ffffff;
+
+  --secondary: #f3f3f3;
+  --secondary-foreground: #1a1a1a;
+
+  --muted: #f3f3f3;
+  --muted-foreground: #6b7280;
+
+  --accent: #f3f3f3;
+  --accent-foreground: #1a1a1a;
+
+  --destructive: #ff4d4d;
+  --destructive-foreground: #ffffff;
+
+  --border: #d4d4d4;
+  --input: #d4d4d4;
+  --ring: #c7c7c7;
+
+  --radius: 0.5rem;
+}
+
+/* ----------------------------- */
+/* DARK THEME (YOUR ORIGINAL)    */
+/* ----------------------------- */
+.dark {
+  --background: #0f172b;
+  --foreground: #e2e8f0;
+
+  --card: #1d293d;
+  --card-foreground: #e2e8f0;
+
+  --popover: #1d293d;
+  --popover-foreground: #e2e8f0;
+
+  --primary: #e2e8f0;
+  --primary-foreground: #0f172b;
+
+  --secondary: #162456;
+  --secondary-foreground: #e2e8f0;
+
+  --muted: #162456;
+  --muted-foreground: #94a3b8;
+
+  --accent: #162456;
+  --accent-foreground: #e2e8f0;
+
+  --destructive: #ff4d4d;
+  --destructive-foreground: #ffffff;
+
+  --border: #1d293d;
+  --input: #1d293d;
+  --ring: #334155;
+}
+
+/* ----------------------------- */
+/* GLOBAL RESET (SAFE VERSION)   */
+/* ----------------------------- */
+
+html, body {
+  height: 100%;
+  width: 100%;
+  background: var(--background);
+  color: var(--foreground);
+  font-family: ui-sans-serif, system-ui, sans-serif;
+}
+
+input,
+textarea,
+select,
+button {
+  font-family: inherit;
+  color: inherit;
+  background: transparent;
+  border: none;
+  outline: none;
+}
+
+/* ----------------------------- */
+/* NOTEBOOK-SAFE TEXTAREA FIXES  */
+/* ----------------------------- */
+
+textarea {
+  resize: none;
+  line-height: 1.4;
+  padding: 0;
+  margin: 0;
+  overflow: auto;
+  box-sizing: border-box;
+}
+
+/* Notebook paper background */
+.notebook-box {
+  background: repeating-linear-gradient(
+    to bottom,
+    #ffffff 0px,
+    #ffffff 22px,
+    #e5e7eb 22px,
+    #e5e7eb 23px
+  );
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+/* Scroll wrapper */
+.notebook-scroll {
+  height: 100%;
+  width: 100%;
+  overflow-y: auto;
+  padding: 8px 10px;
+  box-sizing: border-box;
+}
+
+/* Textarea inside notebook */
+.notebook-textarea {
+  width: 100%;
+  min-height: 100%;
+  padding: 0;
+  margin: 0;
+  line-height: 22px;
+  background: transparent;
+  box-sizing: border-box;
+}

@@ -1,0 +1,38 @@
+import { getModifier } from "../../logic/ability";
+
+interface AbilityScoreProps {
+  label: string;
+  value: number;
+  onChange: (value: number) => void;
+}
+
+export function AbilityScore({ label, value, onChange }: AbilityScoreProps) {
+  const modifier = Number.isFinite(value) ? getModifier(value) : 0;
+
+  return (
+    <div className="bg-white border border-gray-400 rounded-lg p-2 flex flex-col items-center aspect-square">
+
+      {/* Black label ABOVE gray box */}
+      <span className="text-black text-xs font-semibold mb-1">{label}</span>
+
+      {/* Gray inner perfect square */}
+      <div className="bg-gray-100 border border-gray-300 rounded-md w-full aspect-square flex flex-col items-center justify-center">
+
+        {/* Modifier input */}
+        <input
+          type="number"
+          value={modifier}
+          onChange={(e) => {
+            const newMod = Number(e.target.value);
+            const newScore = newMod * 2 + 10;
+            onChange(newScore);
+          }}
+          className="w-10 text-center border border-gray-400 rounded text-black text-xs"
+        />
+      </div>
+
+      {/* Score number at bottom */}
+      <span className="mt-1 text-black text-xs">{value}</span>
+    </div>
+  );
+}
