@@ -364,7 +364,7 @@ export default function App() {
           />
         </div>
 
-        <div className="bg-card border-2 border-amber-700 rounded-lg shadow-xl p-6 md:p-8">
+        <div className="bg-card border-2 border-amber-700 rounded-lg shadow-xl p-6 md:pt-8 md:pb-2">
 
           <CharacterInfoSection
             character={character}

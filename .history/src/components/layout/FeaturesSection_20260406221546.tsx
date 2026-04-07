@@ -16,8 +16,9 @@ export function FeaturesSection({ character, onCharacterChange }: FeaturesSectio
         value={character.features}
         onChange={(e) => onCharacterChange({ features: e.target.value })}
         className="w-full px-3 py-2 bg-input-background border border-border rounded-md 
-                  resize-none overflow-y-auto h-[250px]"
+                   min-h-[150px] resize-none overflow-y-auto"
         placeholder="Character features, racial traits, class features, etc."
+        rows={6}
       />
     </div>
   );

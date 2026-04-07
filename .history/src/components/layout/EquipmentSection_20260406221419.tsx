@@ -15,7 +15,7 @@ export function EquipmentSection({ character, onCharacterChange }: EquipmentSect
       <textarea
         value={character.equipment}
         onChange={(e) => onCharacterChange({ equipment: e.target.value })}
-        className="w-full px-3 py-2 bg-input-background border border-border rounded-md resize-none overflow-y-auto flex-1 max-h-[190px]"
+        className="w-full px-3 py-2 bg-input-background border border-border rounded-md resize-none overflow-y-auto flex-1 max-h-[70px]"
         placeholder="List your character's equipment here..."
       />
     </div>

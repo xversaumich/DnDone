@@ -13,10 +13,12 @@ export function SpellSection({
   onUpdateSpell,
 }: SpellSectionProps) {
 
+  // Flatten spells
   const flatSpells = character.spellsByLevel.flatMap((level) =>
     level.map((s) => s.name)
   );
 
+  // Trim trailing empty spells
   const trimmedSpells = [...flatSpells];
   while (
     trimmedSpells.length > 0 &&
@@ -26,10 +28,12 @@ export function SpellSection({
   }
 
   return (
-    <div className="-mt-1 mb-6">
-      <div className="bg-gray-100 border border-gray-300 rounded-md p-4 h-[245px]">
-        <div className="grid grid-cols-2 gap-3 h-full">
+    <div className="-mt-3 mb-6">
+      <div className="bg-gray-100 border border-gray-300 rounded-md p-4 
+                      max-h-[245px] overflow-y-auto">
+        {/* limit height so it stops above Generate Image button */}
 
+        <div className="grid grid-cols-2 gap-3">
           <NotebookBox
             title="Cantrips"
             values={character.cantrips}
@@ -51,7 +55,6 @@ export function SpellSection({
               });
             }}
           />
-
         </div>
       </div>
     </div>

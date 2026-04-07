@@ -7,9 +7,10 @@ export function NotebookBox({
   values: string[];
   onChange: (index: number, text: string) => void;
 }) {
+  // Make a working copy
   let displayValues = [...values];
 
-  // Trim trailing empty values
+  // 1. Trim trailing empty values
   while (
     displayValues.length > 0 &&
     displayValues[displayValues.length - 1].trim() === ""
@@ -17,24 +18,24 @@ export function NotebookBox({
     displayValues.pop();
   }
 
-  // Ensure at least 4 inputs
+  // 2. Ensure at least 5 inputs
   while (displayValues.length < 4) {
     displayValues.push("");
   }
 
-  // Auto-add a new empty input if all visible ones are filled
+  // 3. Auto-add a new empty input if all visible ones are filled
   const allFilled = displayValues.every((v) => v.trim() !== "");
   if (allFilled) {
     displayValues.push("");
   }
 
   return (
-    <div className="relative w-full h-full bg-white border border-amber-700 rounded-md p-3 flex flex-col min-h-0">
+    <div className="relative w-full aspect-square max-w-[260px] bg-white border border-amber-700 rounded-md p-3 flex flex-col min-h-0">
+
       <h3 className="text-black font-semibold text-base mb-2">
         {title}
       </h3>
 
-      {/* scrolls inside, never outside */}
       <div className="flex-1 min-h-0 overflow-y-auto flex flex-col gap-2 pr-1">
         {displayValues.map((val, i) => (
           <input

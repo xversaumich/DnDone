@@ -26,10 +26,17 @@ export function SpellSection({
   }
 
   return (
-    <div className="-mt-1 mb-6">
-      <div className="bg-gray-100 border border-gray-300 rounded-md p-4 h-[245px]">
-        <div className="grid grid-cols-2 gap-3 h-full">
+    <div className="-mt-8 mb-6">
+      {/* moved entire section up, including label */}
 
+      <h2 className="text-amber-900 mb-3 border-b-2 border-amber-700 pb-1">
+        Spellcasting
+      </h2>
+
+      <div className="bg-gray-100 border border-gray-300 rounded-md p-4 max-h-[300px]">
+        {/* gray box can now be taller */}
+
+        <div className="grid grid-cols-2 gap-3 h-full">
           <NotebookBox
             title="Cantrips"
             values={character.cantrips}
@@ -51,8 +58,8 @@ export function SpellSection({
               });
             }}
           />
-
         </div>
+
       </div>
     </div>
   );

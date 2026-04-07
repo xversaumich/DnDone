@@ -33,7 +33,7 @@ export function SkillsSection({
 
       {/* ⭐ Fixed height + scrollable */}
       <div className="w-full bg-gray-100 border border-gray-300 rounded-md p-3 
-                      h-[250px] overflow-y-auto">
+                      h-[260px] overflow-y-auto">
 
         <div className="flex flex-col gap-3">
           {SKILL_DATA.map(({ name, ability }) => {

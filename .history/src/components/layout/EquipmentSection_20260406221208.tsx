@@ -7,16 +7,14 @@ interface EquipmentSectionProps {
 
 export function EquipmentSection({ character, onCharacterChange }: EquipmentSectionProps) {
   return (
-    <div className="mb-6 h-full flex flex-col min-h-0">
-      <h2 className="text-amber-900 mb-4 border-b-2 border-amber-700 pb-2">
-        Equipment
-      </h2>
-
+    <div className="mb-6">
+      <h2 className="text-amber-900 mb-4 border-b-2 border-amber-700 pb-2">Equipment</h2>
       <textarea
         value={character.equipment}
         onChange={(e) => onCharacterChange({ equipment: e.target.value })}
-        className="w-full px-3 py-2 bg-input-background border border-border rounded-md resize-none overflow-y-auto flex-1 max-h-[190px]"
+        className="w-full px-3 py-2 bg-input-background border border-border rounded-md min-h-[100px] resize-none overflow-y-auto"
         placeholder="List your character's equipment here..."
+        rows={4}
       />
     </div>
   );
