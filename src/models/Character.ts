@@ -36,8 +36,10 @@ export interface Character {
   ac: number;
   speed: number;
 
-  deathSaveSuccesses: number;
-  deathSaveFailures: number;
+  deathSaves: {
+    successes: boolean[];
+    failures: boolean[];
+  };
 
   features: string;
   equipment: string;

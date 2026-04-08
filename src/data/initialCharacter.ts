@@ -23,6 +23,10 @@ export const initialCharacter: Character = {
   },
   ac: 10,
   speed: 30,
+  deathSaves: {
+    successes: [false, false, false],
+    failures: [false, false, false],
+  },
   features: '',
   equipment: '',
   cantrips: ['', '', '', ''],

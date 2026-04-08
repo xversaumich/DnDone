@@ -422,6 +422,8 @@ export default function App() {
                 character={character}
                 onUpdateCantrip={updateCantrip}
                 onUpdateSpell={updateSpell}
+                onTogglePrepared={togglePrepared}
+                onUpdateSlots={updateSlots}
               />
             </div>
 
