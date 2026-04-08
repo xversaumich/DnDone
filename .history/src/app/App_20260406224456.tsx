@@ -418,6 +418,10 @@ export default function App() {
                 />
               </div>
 
+              <h2 className="text-amber-900 -mt-4 mb-2 border-b-2 border-amber-700 pb-1">
+                Spellcasting
+              </h2>
+
               <SpellSection
                 character={character}
                 onUpdateCantrip={updateCantrip}

@@ -396,7 +396,7 @@ export default function App() {
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
 
             {/* Left: Combat + Equipment + Spellcasting stack */}
-            <div className="lg:col-span-2 flex flex-col gap-4 min-h-0 -mb-">
+            <div className="lg:col-span-2 flex flex-col gap-4 min-h-0 -mb-20">
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <CombatStatsSection
@@ -417,6 +417,10 @@ export default function App() {
                   onCharacterChange={setCharacter}
                 />
               </div>
+
+              <h2 className="text-amber-900 -mt-4 mb-2 border-b-2 border-amber-700 pb-1">
+                Spellcasting
+              </h2>
 
               <SpellSection
                 character={character}

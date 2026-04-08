@@ -364,7 +364,7 @@ export default function App() {
           />
         </div>
 
-        <div className="bg-card border-2 border-amber-700 rounded-lg shadow-xl p-6 md:p-8">
+        <div className="bg-card border-2 border-amber-700 rounded-lg shadow-xl p-6 md:pt-8 md:pb-2">
 
           <CharacterInfoSection
             character={character}
@@ -417,6 +417,10 @@ export default function App() {
                   onCharacterChange={setCharacter}
                 />
               </div>
+
+              <h2 className="text-amber-900 -mt-4 mb-2 border-b-2 border-amber-700 pb-1">
+                Spellcasting
+              </h2>
 
               <SpellSection
                 character={character}
