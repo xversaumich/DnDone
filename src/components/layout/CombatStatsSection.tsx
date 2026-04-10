@@ -1,4 +1,5 @@
 import { StatBox } from '../character/StatBox';
+import { DeathSavesBox } from '../character/DeathSavesBox';
 import { Character } from '../../models/Character';
 
 interface CombatStatsSectionProps {
@@ -65,23 +66,12 @@ export function CombatStatsSection({
       </div>
 
       {/* ⭐ Row 3: Death Saves */}
-      <div className="grid grid-cols-2 gap-4">
-        <StatBox
-          label="Death Saves (Successes)"
-          value={character.deathSaveSuccesses ?? 0}
-          onChange={(v) =>
-            onCharacterChange({ deathSaveSuccesses: Number(v) })
-          }
-        />
-
-        <StatBox
-          label="Death Saves (Failures)"
-          value={character.deathSaveFailures ?? 0}
-          onChange={(v) =>
-            onCharacterChange({ deathSaveFailures: Number(v) })
-          }
-        />
-      </div>
+      <DeathSavesBox
+        successes={character.deathSaves.successes}
+        failures={character.deathSaves.failures}
+        onSuccessesChange={(successes) => onCharacterChange({ deathSaves: { ...character.deathSaves, successes } })}
+        onFailuresChange={(failures) => onCharacterChange({ deathSaves: { ...character.deathSaves, failures } })}
+      />
     </div>
   );
 }
