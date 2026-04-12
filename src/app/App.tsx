@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { type ChangeEventHandler, useEffect, useRef, useState } from 'react';
 
 import { getModifier, getProficiencyBonus } from '../logic/ability';
 import { CLASS_RECOMMENDATIONS, CLASS_SAVING_THROWS, type ClassRecommendations } from '../logic/class';
@@ -9,6 +9,8 @@ import { removeFeatureSection, rebuildSkills, getSkillSource, getSkillSourceExcl
 import titleImage from '../assets/title.png';
 import { buildPortraitPrompt } from '../services/imageService';
 import { useCharacter } from '../hooks/useCharacter';
+import { initialCharacter } from '../data/initialCharacter';
+import type { Character } from '../models/Character';
 
 import { AutoFillModal } from '../components/layout/AutoFillModal';
 import { ClassSkillModal } from '../components/layout/ClassSkillModal';
@@ -23,6 +25,100 @@ import { FeaturesSection } from '../components/layout/FeaturesSection';
 import { SpellSection } from '../components/layout/SpellSection';
 import { CharacterPortraitSection } from '../components/layout/CharacterPortraitSection';
 import { Toaster, toast } from 'sonner';
+
+const SAVE_STORAGE_KEY = 'dndone.characterSave.v1';
+
+interface CharacterSavePayload {
+  version: 1;
+  savedAt: string;
+  character: Character;
+  appliedRaceSkills: string[];
+  appliedClassSkills: string[];
+  appliedBackgroundSkills: string[];
+}
+
+const normalizeStringArray = (value: unknown): string[] => {
+  if (!Array.isArray(value)) return [];
+  return value.filter((item): item is string => typeof item === 'string');
+};
+
+const normalizeBooleanArray = (value: unknown, targetLength: number): boolean[] => {
+  if (!Array.isArray(value)) return Array(targetLength).fill(false);
+  const normalized = value.slice(0, targetLength).map(item => Boolean(item));
+  while (normalized.length < targetLength) normalized.push(false);
+  return normalized;
+};
+
+const padArray = <T,>(value: T[], targetLength: number, fallback: () => T): T[] => {
+  const padded = [...value];
+  while (padded.length < targetLength) padded.push(fallback());
+  return padded;
+};
+
+const normalizeCharacter = (value: unknown): Character | null => {
+  if (!value || typeof value !== 'object') return null;
+  const input = value as Partial<Character>;
+
+  return {
+    ...initialCharacter,
+    ...input,
+    abilityScores: {
+      ...initialCharacter.abilityScores,
+      ...(input.abilityScores ?? {}),
+    },
+    skills: {
+      ...initialCharacter.skills,
+      ...(input.skills ?? {}),
+    },
+    savingThrows: {
+      ...initialCharacter.savingThrows,
+      ...(input.savingThrows ?? {}),
+    },
+    hp: {
+      ...initialCharacter.hp,
+      ...(input.hp ?? {}),
+    },
+    deathSaves: {
+      successes: normalizeBooleanArray(input.deathSaves?.successes, 3),
+      failures: normalizeBooleanArray(input.deathSaves?.failures, 3),
+    },
+    cantrips: Array.isArray(input.cantrips)
+      ? padArray(
+          input.cantrips.slice(0, 4).map(value => (typeof value === 'string' ? value : '')),
+          4,
+          () => ''
+        )
+      : initialCharacter.cantrips,
+    spellSlots: Array.isArray(input.spellSlots)
+      ? padArray(
+          input.spellSlots.slice(0, 9).map(slot => ({
+            total: typeof slot?.total === 'number' ? slot.total : 0,
+            expended: typeof slot?.expended === 'number' ? slot.expended : 0,
+          })),
+          9,
+          () => ({ total: 0, expended: 0 })
+        )
+      : initialCharacter.spellSlots,
+    spellsByLevel: Array.isArray(input.spellsByLevel)
+      ? padArray(
+          input.spellsByLevel.slice(0, 9).map(level =>
+            Array.isArray(level)
+              ? padArray(
+                  level.slice(0, 10).map(spell => ({
+                    name: typeof spell?.name === 'string' ? spell.name : '',
+                    prepared: Boolean(spell?.prepared),
+                  })),
+                  10,
+                  () => ({ name: '', prepared: false })
+                )
+              : Array(10).fill(null).map(() => ({ name: '', prepared: false }))
+          ),
+          9,
+          () => Array(10).fill(null).map(() => ({ name: '', prepared: false }))
+        )
+      : initialCharacter.spellsByLevel,
+  };
+};
 
 export default function App() {
   const {
@@ -55,8 +151,49 @@ export default function App() {
   const [backgroundNonConflictingSkills, setBackgroundNonConflictingSkills] = useState<string[]>([]);
   const [selectedBackgroundReplacementSkills, setSelectedBackgroundReplacementSkills] = useState<string[]>([]);
   const [portraitPrompt, setPortraitPrompt] = useState('');
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const proficiencyBonus = getProficiencyBonus(character.level);
+
+  const savePayload: CharacterSavePayload = {
+    version: 1,
+    savedAt: new Date().toISOString(),
+    character,
+    appliedRaceSkills,
+    appliedClassSkills,
+    appliedBackgroundSkills,
+  };
+
+  const persistToLocalStorage = (payload: CharacterSavePayload) => {
+    localStorage.setItem(SAVE_STORAGE_KEY, JSON.stringify(payload));
+  };
+
+  const applyLoadedPayload = (payload: unknown) => {
+    if (!payload || typeof payload !== 'object') {
+      throw new Error('Invalid save file.');
+    }
+
+    const raw = payload as Partial<CharacterSavePayload> & { character?: unknown };
+    const rawCharacter = raw.character ?? raw;
+    const normalizedCharacter = normalizeCharacter(rawCharacter);
+
+    if (!normalizedCharacter) {
+      throw new Error('Save data does not contain a valid character.');
+    }
+
+    setCharacter(normalizedCharacter);
+    setAppliedRaceSkills(normalizeStringArray(raw.appliedRaceSkills));
+    setAppliedClassSkills(normalizeStringArray(raw.appliedClassSkills));
+    setAppliedBackgroundSkills(normalizeStringArray(raw.appliedBackgroundSkills));
+  };
+
+  useEffect(() => {
+    try {
+      persistToLocalStorage(savePayload);
+    } catch {
+      // Ignore autosave failures (private mode/storage limits).
+    }
+  }, [savePayload]);
 
   const handleClassChange = (newClass: string) => {
     if (newClass && CLASS_RECOMMENDATIONS[newClass]) {
@@ -311,6 +448,74 @@ export default function App() {
       .catch(() => toast.info('Prompt generated! Copy it from the text box below.'));
   };
 
+  const handleSaveCharacter = () => {
+    try {
+      persistToLocalStorage(savePayload);
+
+      const exportBlob = new Blob([JSON.stringify(savePayload, null, 2)], {
+        type: 'application/json',
+      });
+
+      const safeName = (character.name || 'character')
+        .trim()
+        .replace(/[^a-z0-9]+/gi, '-')
+        .replace(/^-+|-+$/g, '')
+        .toLowerCase();
+      const filename = `${safeName || 'character'}-${new Date().toISOString().slice(0, 10)}.json`;
+
+      const url = URL.createObjectURL(exportBlob);
+      const anchor = document.createElement('a');
+      anchor.href = url;
+      anchor.download = filename;
+      document.body.appendChild(anchor);
+      anchor.click();
+      anchor.remove();
+      URL.revokeObjectURL(url);
+
+      toast.success('Character saved locally and exported as JSON.');
+    } catch {
+      toast.error('Could not save character.');
+    }
+  };
+
+  const handleLoadCharacter = () => {
+    const localSave = localStorage.getItem(SAVE_STORAGE_KEY);
+
+    if (localSave) {
+      const useLocalSave = window.confirm(
+        'Load your latest local save? Click Cancel to import a JSON file instead.'
+      );
+
+      if (useLocalSave) {
+        try {
+          applyLoadedPayload(JSON.parse(localSave));
+          toast.success('Loaded character from local save.');
+        } catch {
+          toast.error('Local save is invalid. Please import a JSON save file.');
+        }
+        return;
+      }
+    }
+
+    fileInputRef.current?.click();
+  };
+
+  const handleLoadFromFile: ChangeEventHandler<HTMLInputElement> = async (event) => {
+    const file = event.target.files?.[0];
+
+    if (!file) return;
+
+    try {
+      const fileContent = await file.text();
+      applyLoadedPayload(JSON.parse(fileContent));
+      toast.success(`Loaded character from ${file.name}.`);
+    } catch {
+      toast.error('Could not load this file. Please choose a valid JSON save.');
+    } finally {
+      event.target.value = '';
+    }
+  };
+
   return (
     <>
     <Toaster richColors position="top-center" />
@@ -379,6 +584,13 @@ export default function App() {
         </div>
 
         <div className="bg-card border-2 border-amber-700 rounded-lg shadow-xl p-6 md:p-8">
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="application/json,.json"
+            className="hidden"
+            onChange={handleLoadFromFile}
+          />
 
           <CharacterInfoSection
             character={character}
@@ -386,6 +598,8 @@ export default function App() {
             onClassChange={handleClassChange}
             onRaceChange={handleRaceChange}
             onBackgroundChange={handleBackgroundChange}
+            onSaveCharacter={handleSaveCharacter}
+            onLoadCharacter={handleLoadCharacter}
           />
 
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">

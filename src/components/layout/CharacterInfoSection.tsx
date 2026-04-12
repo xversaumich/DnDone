@@ -9,6 +9,8 @@ interface CharacterInfoSectionProps {
   onClassChange: (newClass: string) => void;
   onRaceChange: (newRace: string) => void;
   onBackgroundChange: (newBackground: string) => void;
+  onSaveCharacter: () => void;
+  onLoadCharacter: () => void;
 }
 
 export function CharacterInfoSection({
@@ -17,10 +19,30 @@ export function CharacterInfoSection({
   onClassChange,
   onRaceChange,
   onBackgroundChange,
+  onSaveCharacter,
+  onLoadCharacter,
 }: CharacterInfoSectionProps) {
   return (
     <div className="mb-6">
-      <h2 className="text-amber-900 mb-4 border-b-2 border-amber-700 pb-2">Character Information</h2>
+      <div className="mb-4 border-b-2 border-amber-700 pb-2 flex items-center justify-between gap-3">
+        <h2 className="text-amber-900">Character Information</h2>
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={onSaveCharacter}
+            className="px-3 py-1.5 text-sm rounded-md border border-amber-700 bg-amber-100 hover:bg-amber-200 transition-colors"
+          >
+            Save Character
+          </button>
+          <button
+            type="button"
+            onClick={onLoadCharacter}
+            className="px-3 py-1.5 text-sm rounded-md border border-amber-700 bg-amber-100 hover:bg-amber-200 transition-colors"
+          >
+            Load Character
+          </button>
+        </div>
+      </div>
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <div>
           <label className="block text-sm mb-1">Character Name</label>
