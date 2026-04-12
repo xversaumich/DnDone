@@ -1,4 +1,4 @@
-import { type ChangeEventHandler, useEffect, useRef, useState } from 'react';
+import { type ChangeEventHandler, useRef, useState } from 'react';
 
 import { getModifier, getProficiencyBonus } from '../logic/ability';
 import { CLASS_RECOMMENDATIONS, CLASS_SAVING_THROWS, type ClassRecommendations } from '../logic/class';
@@ -25,8 +25,6 @@ import { FeaturesSection } from '../components/layout/FeaturesSection';
 import { SpellSection } from '../components/layout/SpellSection';
 import { CharacterPortraitSection } from '../components/layout/CharacterPortraitSection';
 import { Toaster, toast } from 'sonner';
-
-const SAVE_STORAGE_KEY = 'dndone.characterSave.v1';
 
 interface CharacterSavePayload {
   version: 1;
@@ -164,10 +162,6 @@ export default function App() {
     appliedBackgroundSkills,
   };
 
-  const persistToLocalStorage = (payload: CharacterSavePayload) => {
-    localStorage.setItem(SAVE_STORAGE_KEY, JSON.stringify(payload));
-  };
-
   const applyLoadedPayload = (payload: unknown) => {
     if (!payload || typeof payload !== 'object') {
       throw new Error('Invalid save file.');
@@ -187,13 +181,6 @@ export default function App() {
     setAppliedBackgroundSkills(normalizeStringArray(raw.appliedBackgroundSkills));
   };
 
-  useEffect(() => {
-    try {
-      persistToLocalStorage(savePayload);
-    } catch {
-      // Ignore autosave failures (private mode/storage limits).
-    }
-  }, [savePayload]);
 
   const handleClassChange = (newClass: string) => {
     if (newClass && CLASS_RECOMMENDATIONS[newClass]) {
@@ -450,8 +437,6 @@ export default function App() {
 
   const handleSaveCharacter = () => {
     try {
-      persistToLocalStorage(savePayload);
-
       const exportBlob = new Blob([JSON.stringify(savePayload, null, 2)], {
         type: 'application/json',
       });
@@ -472,31 +457,13 @@ export default function App() {
       anchor.remove();
       URL.revokeObjectURL(url);
 
-      toast.success('Character saved locally and exported as JSON.');
+      toast.success('Character exported as JSON.');
     } catch {
       toast.error('Could not save character.');
     }
   };
 
   const handleLoadCharacter = () => {
-    const localSave = localStorage.getItem(SAVE_STORAGE_KEY);
-
-    if (localSave) {
-      const useLocalSave = window.confirm(
-        'Load your latest local save? Click Cancel to import a JSON file instead.'
-      );
-
-      if (useLocalSave) {
-        try {
-          applyLoadedPayload(JSON.parse(localSave));
-          toast.success('Loaded character from local save.');
-        } catch {
-          toast.error('Local save is invalid. Please import a JSON save file.');
-        }
-        return;
-      }
-    }
-
     fileInputRef.current?.click();
   };
 
