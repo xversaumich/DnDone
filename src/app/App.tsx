@@ -7,6 +7,7 @@ import { BACKGROUND_RECOMMENDATIONS } from '../logic/backgrounds';
 import { removeFeatureSection, rebuildSkills, getSkillSource, getSkillSourceExcludingClass } from '../logic/characterUtils';
 
 import titleImage from '../assets/title.png';
+import { buildPortraitPrompt } from '../services/imageService';
 import { useCharacter } from '../hooks/useCharacter';
 
 import { AutoFillModal } from '../components/layout/AutoFillModal';
@@ -53,6 +54,7 @@ export default function App() {
   const [backgroundConflictingSkills, setBackgroundConflictingSkills] = useState<string[]>([]);
   const [backgroundNonConflictingSkills, setBackgroundNonConflictingSkills] = useState<string[]>([]);
   const [selectedBackgroundReplacementSkills, setSelectedBackgroundReplacementSkills] = useState<string[]>([]);
+  const [portraitPrompt, setPortraitPrompt] = useState('');
 
   const proficiencyBonus = getProficiencyBonus(character.level);
 
@@ -307,13 +309,21 @@ export default function App() {
     navigator.clipboard.writeText(generatedPrompt)
       .then(() => toast.success('Prompt copied to clipboard!'))
       .catch(() => toast.info('Prompt generated! Copy it from the text box below.'));
-  setPortraitPrompt(generatedPrompt);
+  };
+
+  return (
+    <>
+    <Toaster richColors position="top-center" />
+    <div className="min-h-screen bg-gradient-to-br from-amber-50 to-stone-100 p-4 md:p-8">
+      <div className="max-w-6xl mx-auto">
+
+        <AutoFillModal
           show={showAutoFillPrompt}
-  alert(`Portrait prompt copied to clipboard:\n\n${generatedPrompt}`);
-    await navigator.clipboard.writeText(generatedPrompt);
+          pendingClass={pendingClass}
+          onApply={applyClassRecommendations}
           onDecline={declineAutoFill}
         />
-  alert(`Portrait prompt copied to clipboard:\n\n${generatedPrompt}`);
+
         <ClassSkillModal
           show={showClassSkillChoice}
           pendingClass={pendingClass}
