@@ -21,7 +21,7 @@ import { EquipmentSection } from '../components/layout/EquipmentSection';
 import { FeaturesSection } from '../components/layout/FeaturesSection';
 import { SpellSection } from '../components/layout/SpellSection';
 import { CharacterPortraitSection } from '../components/layout/CharacterPortraitSection';
-import { buildPortraitPrompt } from '../services/imageService';
+import { Toaster, toast } from 'sonner';
 
 export default function App() {
   const {
@@ -35,7 +35,6 @@ export default function App() {
     updateSlots,
   } = useCharacter();
 
-  const [portraitPrompt, setPortraitPrompt] = useState('');
   const [showAutoFillPrompt, setShowAutoFillPrompt] = useState(false);
   const [pendingClass, setPendingClass] = useState('');
   const [showClassSkillChoice, setShowClassSkillChoice] = useState(false);
@@ -298,47 +297,23 @@ export default function App() {
     setSelectedBackgroundReplacementSkills([]);
   };
 
-  const isCharacterSheetReady = () => {
-  return (
-    character.race.trim() !== '' &&
-    character.class.trim() !== '' 
-    
-  );
-};
-  const handleGeneratePortrait = async () => {
-  if (!isCharacterSheetReady()) {
-    alert('Please select a race and class before generating a portrait prompt.');
-    return;
-  }
-
-  const generatedPrompt = buildPortraitPrompt(character);
-  const finalPrompt = portraitPrompt.trim() === '' ? generatedPrompt : portraitPrompt;
-
-  if (portraitPrompt.trim() === '') {
-    setPortraitPrompt(generatedPrompt);
-  }
-
-  try {
-    await navigator.clipboard.writeText(finalPrompt);
-  } catch {}
-
-  alert(`Portrait prompt copied to clipboard:\n\n${finalPrompt}`);
-};
-  
   const initiative = getModifier(character.abilityScores.dexterity);
   const initiativeString = initiative >= 0 ? `+${initiative}` : `${initiative}`;
 
-  return (
-    <div className="min-h-screen bg-gradient-to-br from-amber-50 to-stone-100 p-4 md:p-8">
-      <div className="max-w-6xl mx-auto">
-
-        <AutoFillModal
+  const handleGeneratePortrait = () => {
+    const generatedPrompt = buildPortraitPrompt(character);
+    setPortraitPrompt(generatedPrompt);
+    
+    navigator.clipboard.writeText(generatedPrompt)
+      .then(() => toast.success('Prompt copied to clipboard!'))
+      .catch(() => toast.info('Prompt generated! Copy it from the text box below.'));
+  setPortraitPrompt(generatedPrompt);
           show={showAutoFillPrompt}
-          pendingClass={pendingClass}
-          onApply={applyClassRecommendations}
+  alert(`Portrait prompt copied to clipboard:\n\n${generatedPrompt}`);
+    await navigator.clipboard.writeText(generatedPrompt);
           onDecline={declineAutoFill}
         />
-
+  alert(`Portrait prompt copied to clipboard:\n\n${generatedPrompt}`);
         <ClassSkillModal
           show={showClassSkillChoice}
           pendingClass={pendingClass}
@@ -461,7 +436,7 @@ export default function App() {
               <CharacterPortraitSection
                 onGeneratePortrait={handleGeneratePortrait}
                 portraitPrompt={portraitPrompt}
-                onPortraitPromptChange={setPortraitPrompt}  
+                onPortraitPromptChange={setPortraitPrompt}
               />
             </div>
 
@@ -469,5 +444,6 @@ export default function App() {
         </div>
       </div>
     </div>
+    </>
   );
 }
