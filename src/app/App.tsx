@@ -21,6 +21,7 @@ import { EquipmentSection } from '../components/layout/EquipmentSection';
 import { FeaturesSection } from '../components/layout/FeaturesSection';
 import { SpellSection } from '../components/layout/SpellSection';
 import { CharacterPortraitSection } from '../components/layout/CharacterPortraitSection';
+import { buildPortraitPrompt } from '../services/imageService';
 
 export default function App() {
   const {
@@ -34,6 +35,7 @@ export default function App() {
     updateSlots,
   } = useCharacter();
 
+  const [portraitPrompt, setPortraitPrompt] = useState('');
   const [showAutoFillPrompt, setShowAutoFillPrompt] = useState(false);
   const [pendingClass, setPendingClass] = useState('');
   const [showClassSkillChoice, setShowClassSkillChoice] = useState(false);
@@ -296,6 +298,33 @@ export default function App() {
     setSelectedBackgroundReplacementSkills([]);
   };
 
+  const isCharacterSheetReady = () => {
+  return (
+    character.race.trim() !== '' &&
+    character.class.trim() !== '' 
+    
+  );
+};
+  const handleGeneratePortrait = async () => {
+  if (!isCharacterSheetReady()) {
+    alert('Please select a race and class before generating a portrait prompt.');
+    return;
+  }
+
+  const generatedPrompt = buildPortraitPrompt(character);
+  const finalPrompt = portraitPrompt.trim() === '' ? generatedPrompt : portraitPrompt;
+
+  if (portraitPrompt.trim() === '') {
+    setPortraitPrompt(generatedPrompt);
+  }
+
+  try {
+    await navigator.clipboard.writeText(finalPrompt);
+  } catch {}
+
+  alert(`Portrait prompt copied to clipboard:\n\n${finalPrompt}`);
+};
+  
   const initiative = getModifier(character.abilityScores.dexterity);
   const initiativeString = initiative >= 0 ? `+${initiative}` : `${initiative}`;
 
@@ -430,7 +459,9 @@ export default function App() {
             {/* Right: Portrait only */}
             <div>
               <CharacterPortraitSection
-                onGeneratePortrait={() => alert('AI portrait generation coming soon!')}
+                onGeneratePortrait={handleGeneratePortrait}
+                portraitPrompt={portraitPrompt}
+                onPortraitPromptChange={setPortraitPrompt}  
               />
             </div>
 

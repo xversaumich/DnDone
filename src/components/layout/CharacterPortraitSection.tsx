@@ -2,27 +2,51 @@ import { Scroll, Sparkles } from 'lucide-react';
 
 interface CharacterPortraitSectionProps {
   onGeneratePortrait: () => void;
+  portraitPrompt?: string;
+  onPortraitPromptChange: (value: string) => void;
 }
 
-export function CharacterPortraitSection({ onGeneratePortrait }: CharacterPortraitSectionProps) {
+export function CharacterPortraitSection({
+  onGeneratePortrait,
+  portraitPrompt,
+  onPortraitPromptChange,
+}: CharacterPortraitSectionProps) {
   return (
-    <div>
-      <h2 className="text-amber-900 mb-4 border-b-2 border-amber-700 pb-2">Character Portrait</h2>
-      <div className="flex flex-col items-center gap-3">
-        <div className="w-full aspect-[3/4] bg-gradient-to-br from-amber-100 to-stone-200 border-2 border-amber-700 rounded-lg flex items-center justify-center">
-          <div className="text-center text-muted-foreground">
-            <Scroll className="w-12 h-12 mx-auto mb-2 opacity-30" />
-            <p className="text-sm">Portrait will appear here</p>
+    <section>
+      <h2 className="text-amber-900 mb-4 border-b-2 border-amber-700 pb-2 w-full">Character Portrait</h2>
+      
+
+      <div className="border-2 border-[#C96A00] rounded-2xl bg-[#F5EFD8] p-6">
+        <div className="rounded-xl border-2 border-[#C96A00] bg-[#F7F2E3] min-h-[160px] flex items-center justify-center mb-6">
+          <div className="text-center text-[#8A8A8A]">
+            <Scroll className="w-14 h-14 mx-auto mb-4 opacity-50" />
+            <p className="text-2xl">Portrait will appear here</p>
           </div>
         </div>
+
         <button
-          className="w-full px-4 py-2 bg-amber-700 text-white rounded-md hover:bg-amber-800 transition-colors flex items-center justify-center gap-2"
+          type="button"
           onClick={onGeneratePortrait}
+          className="w-full bg-[#C96A00] hover:bg-[#B55E00] text-white font-semibold text-xl py-4 rounded-xl transition-colors flex items-center justify-center gap-3 mb-6"
         >
-          <Sparkles className="w-4 h-4" />
+          <Sparkles className="w-5 h-5" />
           Generate Portrait
         </button>
-      </div>
+
+        {portraitPrompt && (
+  <div className="mt-2">
+    <div className="mb-2 text-base font-semibold text-[#5C4033]">
+      Prompt Preview
     </div>
+
+    <textarea
+      value={portraitPrompt}
+      onChange={(e) => onPortraitPromptChange(e.target.value)}
+      className="w-full h-64 rounded-xl border-2 border-[#C96A00] bg-[#F7F2E3] p-4 text-sm text-[#333333] resize-none focus:outline-none"
+    />
+  </div>
+)}
+      </div>
+    </section>
   );
 }
