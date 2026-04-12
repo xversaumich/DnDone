@@ -10,9 +10,12 @@ export function AbilityScore({ label, value, onChange }: AbilityScoreProps) {
   const modifier = Number.isFinite(value) ? getModifier(value) : 0;
   const displayMod = modifier >= 0 ? `+${modifier}` : `${modifier}`;
 
-  const updateFromMod = (newMod: number) => {
-    const newScore = newMod * 2 + 10;
-    onChange(newScore);
+  const updateScore = (newScore: number) => {
+    if (!Number.isFinite(newScore)) {
+      return;
+    }
+
+    onChange(Math.trunc(newScore));
   };
 
   return (
@@ -41,25 +44,7 @@ export function AbilityScore({ label, value, onChange }: AbilityScoreProps) {
           className="relative bg-gray-100 border border-gray-300 rounded-md aspect-square flex items-center justify-center"
           style={{ width: "75%" }}
         >
-          {/* Invisible input for typing + spinner */}
-          <input
-            type="number"
-            value={modifier}
-            onChange={(e) => updateFromMod(Number(e.target.value))}
-            className="absolute inset-0 w-full h-full text-center"
-            style={{
-              color: "transparent",
-              background: "transparent",
-              fontSize: "22px",
-              fontWeight: 600,
-              caretColor: "black",
-
-              // ⭐ Push spinner arrows all the way to the right
-              paddingRight: "48px",
-            }}
-          />
-
-          {/* Visible +X overlay */}
+          {/* Read-only modifier display derived from the ability score */}
           <span
             className="pointer-events-none absolute inset-0 flex items-center justify-center text-black"
             style={{ fontSize: "22px", fontWeight: 600 }}
@@ -69,13 +54,15 @@ export function AbilityScore({ label, value, onChange }: AbilityScoreProps) {
         </div>
       </div>
 
-      {/* Bottom number */}
-      <span
-        className="text-black leading-none mb-0.5"
-        style={{ fontSize: "10px", fontWeight: 700 }}
-      >
-        {value}
-      </span>
+      {/* Bottom ability score control */}
+      <input
+        type="number"
+        value={value}
+        onChange={(e) => updateScore(Number(e.target.value))}
+        step={1}
+        className="text-black leading-none mb-0.5 text-center bg-transparent"
+        style={{ fontSize: "10px", fontWeight: 700, width: "50px" }}
+      />
     </div>
   );
 }
