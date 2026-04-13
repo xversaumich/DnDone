@@ -1,7 +1,12 @@
 export function removeFeatureSection(features: string, sectionTitle: string): string {
   if (!features) return '';
-  const regex = new RegExp(`=== ${sectionTitle} ===[\\s\\S]*?(?=== [A-Z ]+ ===|$)`, 'g');
-  return features.replace(regex, '').trim();
+  const escapedSectionTitle = sectionTitle.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const regex = new RegExp(
+    `(?:^|\\n)=== ${escapedSectionTitle} ===\\n[\\s\\S]*?(?=\\n=== [A-Z ]+ ===|$)`,
+    'g'
+  );
+
+  return features.replace(regex, '').replace(/\n{3,}/g, '\n\n').trim();
 }
 
 // Rebuilds the character's skill object based on race/class/background skills
